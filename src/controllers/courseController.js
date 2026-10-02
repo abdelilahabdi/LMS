@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const getCourses = async (req, res, next) => {
     try {
 
-        const {category , level , keyword} = req.query ;
+        const {category , level , keyword , sort} = req.query ;
 
         let filter = {
             status : "published"
@@ -23,7 +23,7 @@ const getCourses = async (req, res, next) => {
                {description : {$regex: keyword , $options : "i"}} 
             ];
         }
-        const courses = await Course.find(filter) ;
+        const courses = await Course.find(filter).sort(sort) ;
 
         res.status(200).json(courses);
     } catch (error) {
