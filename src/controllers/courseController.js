@@ -59,4 +59,28 @@ const getCourseById = async (req, res, next) => {
   }
 };
 
-module.exports = {getCourses , getCourseById};
+
+
+const createCourse = async (req, res, next) => {
+    try {
+        const {
+            title,
+            description,
+            category,
+            level
+        } = req.body;
+
+        const course = await Course.create({
+            title,
+            description,
+            category,
+            level
+        });
+
+        res.status(201).json(course);
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = {getCourses , getCourseById , createCourse};
