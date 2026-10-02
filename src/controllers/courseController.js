@@ -83,4 +83,33 @@ const createCourse = async (req, res, next) => {
     }
 };
 
-module.exports = {getCourses , getCourseById , createCourse};
+
+const updateCourse = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Invalid course id"
+            });
+        }
+
+        const course = await Course.findByIdAndUpdate(
+            id,
+            req.body,
+            { new: true, runValidators: true }
+        );
+
+        if (!course) {
+            return res.status(404).json({
+                message: "Course not found"
+            });
+        }
+
+        res.status(200).json(course);
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = {getCourses , getCourseById , createCourse , updateCourse};
