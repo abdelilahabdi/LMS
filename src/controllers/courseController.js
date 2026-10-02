@@ -12,6 +12,17 @@ const getCourses = async (req, res, next) => {
     }
 };
 
-module.exports = {
-    getCourses
+
+const getCourseById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const course = await Course.findById(id);
+
+    res.status(200).json(course);
+  } catch (error) {
+    next(error);
+  }
 };
+
+module.exports = {getCourses , getCourseById};

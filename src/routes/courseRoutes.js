@@ -7,8 +7,9 @@ const router = express.Router() ;
 //     }) ;
 // }) ;
 
-const {getCourses} = require("../controllers/courseController");
+const {getCourses , getCourseById} = require("../controllers/courseController");
 
 router.get("/", getCourses);
 
+router.get("/:id", getCourseById) ;
 module.exports = router ;
