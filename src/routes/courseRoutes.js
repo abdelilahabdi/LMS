@@ -7,7 +7,7 @@ const router = express.Router() ;
 //     }) ;
 // }) ;
 
-const {getCourses , getCourseById, createCourse , updateCourse} = require("../controllers/courseController");
+const {getCourses , getCourseById, createCourse , updateCourse , deleteCourse} = require("../controllers/courseController");
 const { getModulesByCourse } = require("../controllers/moduleController");
 
 
@@ -17,5 +17,8 @@ router.get("/:id", getCourseById) ;
 
 router.post("/" , createCourse) ;
 router.put("/:id" , updateCourse) ;
+router.delete("/:id" , deleteCourse) ;
+
 router.get("/:courseId/modules", getModulesByCourse);
+
 module.exports = router ;

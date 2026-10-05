@@ -112,4 +112,32 @@ const updateCourse = async (req, res, next) => {
     }
 };
 
-module.exports = {getCourses , getCourseById , createCourse , updateCourse};
+
+
+const deleteCourse = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Invalid course id"
+            });
+        }
+
+        const course = await Course.findByIdAndDelete(id);
+
+        if (!course) {
+            return res.status(404).json({
+                message: "Course not found"
+            });
+        }
+
+        res.status(200).json({
+            message: "Course deleted successfully"
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = {getCourses , getCourseById , createCourse , updateCourse , deleteCourse};
