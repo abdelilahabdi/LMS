@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const  mongoose =  require("mongoose");
 
 const enrollment_schema = new mongoose.Schema(
   {
@@ -38,4 +38,4 @@ enrollment_schema.index({ student_id: 1, course_id: 1 }, { unique: true });
 
 const Enrollment = mongoose.model('Enrollment', enrollment_schema);
 
-export default Enrollment;
+module.exports = Enrollment;

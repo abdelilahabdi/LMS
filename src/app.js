@@ -24,4 +24,10 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(notFound);
 app.use(errorHandler);
 
+
+
+//tassk amine
+const enrollment_route = require('./routes/enrollment_Routes');
+app.use('/', enrollment_route);
+
 module.exports = app;
