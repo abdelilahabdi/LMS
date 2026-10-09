@@ -21,4 +21,4 @@ const status_schema =  new mongoose.Schema(
 
 
 const Staus = mongoose.model('staus', status_schema);
-module.exports = status_schema;
+module.exports = Staus;
