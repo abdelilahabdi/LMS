@@ -1,8 +1,9 @@
 const express =  require('express');
-const {enrollment_create} = require('../controllers/EnrollmentController');
+const {enrollment_create , enrollment_getAll} = require('../controllers/EnrollmentController');
 
 
 const  route =  express.Router();
 
-route.post('/enrollment',enrollment_create)
+route.post('/enrollment',enrollment_create);
+route.get('/enrollment',enrollment_getAll);
 module.exports = route; 
