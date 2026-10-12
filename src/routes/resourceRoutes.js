@@ -6,9 +6,9 @@ const {
     uploadResource
 } = require("../controllers/resourceController");
 
-const {
+const 
     resourceUpload
-} = require("../middlewares/resourceUpload");
+ = require("../middlewares/resourceUpload");
 
 /**
  * @swagger
