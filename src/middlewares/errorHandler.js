@@ -8,7 +8,7 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    if (err.message === "only PDF  MP4 and WebM  files are allowed") {
+    if (err.message === "Only PDF, MP4 and WebM files are allowed.") {
         return res.status(400).json({
             success: false,
             message: err.message
@@ -17,7 +17,7 @@ const errorHandler = (err, req, res, next) => {
 
     console.error(err);
 
-    res.status(500).json({
+    return res.status(500).json({
         success: false,
         message: "Internal server error"
     });
