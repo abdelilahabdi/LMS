@@ -116,7 +116,15 @@ const login = async (req , res , next) => {
         next(error) ;
     }
 } ;
+
+
+const getMe = (req, res) => {
+    return res.status(200).json({
+        user: req.user,
+    });
+} ;
 module.exports = {
     register ,
-    login
+    login ,
+    getMe,
 };
