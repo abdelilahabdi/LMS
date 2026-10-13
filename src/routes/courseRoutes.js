@@ -1,6 +1,11 @@
 const express = require("express") ;
 const router = express.Router() ;
 
+
+const auth = require("../middlewares/auth");
+const authorize = require("../middlewares/authorize");
+const canAccessCourseContent = require("../middlewares/canAccessCourseContent");
+
 // router.get("/" , (req,res) => {
 //     res.json ({
 //         message : "Get courses"
@@ -95,7 +100,7 @@ router.get("/:id", getCourseById) ;
  *       500:
  *         description: Internal server error
  */
-router.post("/" , createCourse) ;
+router.post("/" ,auth , authorize("trainer" , "admin") , createCourse) ;
 
 /**
  * @swagger
@@ -146,7 +151,7 @@ router.post("/" , createCourse) ;
  *         description: Internal server error
  */
 
-router.put("/:id" , updateCourse) ;
+router.put("/:id" , auth , authorize("trainer" , "admin") , updateCourse) ;
 
 /**
  * @swagger
@@ -173,7 +178,7 @@ router.put("/:id" , updateCourse) ;
  *       500:
  *         description: Internal server error
  */
-router.delete("/:id" , deleteCourse) ;
+router.delete("/:id" , auth , authorize ("trainer" , "admin") , deleteCourse) ;
 
 /**
  * @swagger
@@ -200,6 +205,6 @@ router.delete("/:id" , deleteCourse) ;
  *       500:
  *         description: Internal server error
  */
-router.get("/:courseId/modules", getModulesByCourse);
+router.get("/:courseId/modules", auth , canAccessCourseContent , getModulesByCourse);
 
 module.exports = router ;
