@@ -43,7 +43,7 @@ const create_module = async (req, res, next) =>
 
         res.status(201).json(new_module);
     }
-    catch (error) { next(error)}
+    catch (error) { next(error);}
 };
 
 module.exports = {
