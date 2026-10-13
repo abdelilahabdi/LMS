@@ -1,7 +1,16 @@
 const express = require("express");
 const router = express.Router();
 
-const { oauth2Client, getAuthUrl, drive } = require("../config/googleDrive");
+const {
+    oauth2Client,
+    getAuthUrl,
+    setCredentials,
+    loadSavedCredentials,
+    drive
+} = require("../config/googleDrive");
+
+// Load saved Google Drive tokens when the module starts.
+loadSavedCredentials();
 
 router.get("/auth", (req, res) => {
     res.redirect(getAuthUrl());
@@ -17,9 +26,8 @@ router.get("/oauth2callback", async (req, res, next) => {
 
         const { tokens } = await oauth2Client.getToken(code);
 
-        oauth2Client.setCredentials(tokens);
+        setCredentials(tokens);
 
-        // Temporary: show connection success without exposing tokens.
         const result = await drive.about.get({
             fields: "user(displayName,emailAddress)"
         });
