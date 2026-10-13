@@ -11,9 +11,7 @@ const {
     uploadResource
 } = require("../controllers/resourceController");
 
-const 
-    resourceUpload
- = require("../middlewares/resourceUpload");
+const { resourceUpload } = require("../middlewares/resourceUpload");
 
 
 
@@ -51,7 +49,6 @@ const
  *         required: true
  *         schema:
  *           type: string
- *         description: ID of the target module
  *     requestBody:
  *       required: true
  *       content:
@@ -86,6 +83,7 @@ router.get(
     getResourcesByModule
 );
 
+
 router.post(
     "/:moduleId/resources",
     auth,
@@ -93,5 +91,8 @@ router.post(
     resourceUpload.single("file"),
     uploadResource
 );
+
+router.post("/:moduleId/resources", resourceUpload.single("file"), uploadResource);
+
 
 module.exports = router;
