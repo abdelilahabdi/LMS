@@ -20,6 +20,11 @@ const resourceSchema = new mongoose.Schema(
             trim: true
         },
 
+        fileId: {
+            type: String,
+            default: null
+        },
+
         module: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Module",
