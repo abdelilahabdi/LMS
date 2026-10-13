@@ -79,8 +79,19 @@ const
  *         description: Internal server error
  */
 
-router.get("/:moduleId/resources", auth , canAccessCourseContent , getResourcesByModule);
+router.get(
+    "/:moduleId/resources",
+    auth,
+    canAccessCourseContent,
+    getResourcesByModule
+);
 
-router.post("/:moduleId/resources", auth , authorize("trainer", "admin") ,resourceUpload.single("file"),uploadResource);
+router.post(
+    "/:moduleId/resources",
+    auth,
+    authorize("trainer", "admin"),
+    resourceUpload.single("file"),
+    uploadResource
+);
 
 module.exports = router;
