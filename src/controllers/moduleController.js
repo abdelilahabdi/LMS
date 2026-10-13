@@ -46,6 +46,20 @@ const create_module = async (req, res, next) =>
     catch (error) { next(error);}
 };
 
+const  getModulesByID = async (req, res, next) =>
+{
+    try 
+    {
+        const {id} =  req.params;
+        const   get_module = await Module.findById(id);
+        if (!get_module)
+            return res.status(404).json({ message: "Module not found" });
+
+         return res.status(200).json(module);
+        
+        
+    } catch (error){next(error); }
+}
 module.exports = {
     getModulesByCourse,
     create_module
