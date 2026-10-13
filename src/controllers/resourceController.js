@@ -133,7 +133,7 @@ const uploadResource = async (req, res, next) => {
         });
     } catch (error) {
         if (savedFilePath) {
-            await fs.unlink(savedFilePath).catch(() => {});
+            await fs.unlink(savedFilePath).catch(() => { });
         }
 
         next(error);

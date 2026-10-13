@@ -23,10 +23,13 @@ const storage = multer.diskStorage({
 
 const allowedTypes = {
     "application/pdf": [".pdf"],
-    "video/mp4": [".mp4"],
-    "video/webm": [".webm"]
-};
 
+    "video/mp4": [".mp4"],
+    "video/webm": [".webm"],
+
+    "image/jpeg": [".jpg", ".jpeg"],
+    "image/png": [".png"]
+};
 const fileFilter = (req, file, cb) => {
     const extension = path.extname(file.originalname).toLowerCase();
     const extensions = allowedTypes[file.mimetype];
@@ -46,4 +49,4 @@ const resourceUpload = multer({
     }
 });
 
-module.exports = resourceUpload;
+module.exports = {resourceUpload , UPLOAD_DIR: uploadDir};
