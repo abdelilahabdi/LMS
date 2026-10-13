@@ -1,5 +1,10 @@
 const express = require("express");
 const router = express.Router();
+const canAccessCourseContent = require("../middlewares/canAccessCourseContent") ;
+
+const auth = require("../middlewares/auth");
+const authorize = require("../middlewares/authorize");
+
 
 const {
     getResourcesByModule,
@@ -9,6 +14,11 @@ const {
 const 
     resourceUpload
  = require("../middlewares/resourceUpload");
+
+
+
+ 
+
 
 /**
  * @swagger
@@ -69,8 +79,8 @@ const
  *         description: Internal server error
  */
 
-router.get("/:moduleId/resources", getResourcesByModule);
+router.get("/:moduleId/resources", auth , canAccessCourseContent , getResourcesByModule);
 
-router.post("/:moduleId/resources",resourceUpload.single("file"),uploadResource);
+router.post("/:moduleId/resources", auth , authorize("trainer", "admin") ,resourceUpload.single("file"),uploadResource);
 
 module.exports = router;
