@@ -62,7 +62,7 @@ const get_all_modules = async (req, res, next) =>
     }
 };
 
-const  getModulesByID = async (req, res, next) =>
+const  get_module_by_id = async (req, res, next) =>
 {
     try 
     {
@@ -71,7 +71,7 @@ const  getModulesByID = async (req, res, next) =>
         if (!get_module)
             return res.status(404).json({ message: "Module not found" });
 
-         return res.status(200).json(module);
+         return res.status(200).json(get_module);
         
         
     } catch (error){next(error); }
@@ -83,5 +83,6 @@ const  getModulesByID = async (req, res, next) =>
 module.exports = {
     getModulesByCourse,
     create_module,
-    get_all_modules
+    get_all_modules,
+    get_module_by_id
 };
