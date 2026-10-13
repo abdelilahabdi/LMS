@@ -19,6 +19,8 @@ const getModulesByCourse = async (req, res, next) =>
     }
 };
 
+
+
 const create_module = async (req, res, next) =>
 {
     try
@@ -46,6 +48,20 @@ const create_module = async (req, res, next) =>
     catch (error) { next(error);}
 };
 
+const get_all_modules = async (req, res, next) =>
+{
+    try
+    {
+        const modules = await Module.find();
+
+        return res.status(200).json(modules);
+    }
+    catch (error)
+    {
+        next(error);
+    }
+};
+
 const  getModulesByID = async (req, res, next) =>
 {
     try 
@@ -60,7 +76,12 @@ const  getModulesByID = async (req, res, next) =>
         
     } catch (error){next(error); }
 }
+
+
+
+
 module.exports = {
     getModulesByCourse,
-    create_module
+    create_module,
+    get_all_modules
 };
