@@ -6,7 +6,9 @@ const {
     uploadResource
 } = require("../controllers/resourceController");
 
-const { resourceUpload } = require("../middlewares/resourceUpload");/**
+const { resourceUpload } = require("../middlewares/resourceUpload");
+
+/**
  * @swagger
  * /api/modules/{moduleId}/resources:
  *   get:
@@ -37,7 +39,6 @@ const { resourceUpload } = require("../middlewares/resourceUpload");/**
  *         required: true
  *         schema:
  *           type: string
- *         description: ID of the target module
  *     requestBody:
  *       required: true
  *       content:
@@ -67,6 +68,6 @@ const { resourceUpload } = require("../middlewares/resourceUpload");/**
 
 router.get("/:moduleId/resources", getResourcesByModule);
 
-router.post("/:moduleId/resources",resourceUpload.single("file"),uploadResource);
+router.post("/:moduleId/resources", resourceUpload.single("file"), uploadResource);
 
 module.exports = router;
