@@ -1,6 +1,8 @@
 const Progress = require("../models/Progress");
 const Enrollment = require("../models/Enrollment");
 const Status = require("../models/Status");
+const Resource = require("../models/Resource");
+const Module = require("../models/Module");
 
 const getProgressions = async (req, res, next) => {
     try {
@@ -92,8 +94,60 @@ const initializeProgression = async (req, res, next) => {
     }
 };
 
+const completeResource = async (req, res, next) => {
+    try {
+        const progression = await Progress.findOne({
+            _id: req.params.id,
+            student_id: req.user.id
+        });
+
+        if (!progression) {
+            return res.status(404).json({ message: "Progression not found" });
+        }
+
+        const enrollment = await Enrollment.findOne({
+            _id: progression.enrollment_id,
+            student_id: req.user.id,
+            course_id: progression.course_id
+        });
+        if (!enrollment) {
+            return res.status(403).json({ message: "A matching enrollment is required" });
+        }
+
+        const status = await Status.findById(enrollment.status_id);
+        if (!status || status.status_name !== "active") {
+            return res.status(403).json({ message: "An active enrollment is required" });
+        }
+
+        const resource = await Resource.findById(req.params.resourceId);
+        if (!resource) {
+            return res.status(404).json({ message: "Resource not found" });
+        }
+
+        const module = await Module.findById(resource.module);
+        if (!module || module.course.toString() !== progression.course_id.toString()) {
+            return res.status(400).json({ message: "Resource does not belong to this course" });
+        }
+
+        const alreadyCompleted = progression.completed_resources.some(
+            (completedResourceId) => completedResourceId.toString() === resource.id
+        );
+        if (alreadyCompleted) {
+            return res.status(409).json({ message: "Resource is already completed" });
+        }
+
+        progression.completed_resources.push(resource._id);
+        await progression.save();
+
+        return res.status(200).json({ progression });
+    } catch (error) {
+        return next(error);
+    }
+};
+
 module.exports = {
     getProgressions,
     getProgressionById,
-    initializeProgression
+    initializeProgression,
+    completeResource
 };
