@@ -138,11 +138,8 @@ const updateCourse = async (req, res, next) => {
             });
         }
 
-        const course = await Course.findByIdAndUpdate(
-            id,
-            req.body,
-            { new: true, runValidators: true }
-        );
+        const course = await Course.findById(id);
+            
 
         if (!course) {
             return res.status(404).json({
@@ -150,7 +147,47 @@ const updateCourse = async (req, res, next) => {
             });
         }
 
-        res.status(200).json(course);
+        const userId = req.user._id || req.user.id;
+
+        if (
+            req.user.role === "trainer" && (!course.trainer || course.trainer.toString() !== userId.toString())
+        ) {
+            return res.status(403).json({
+                message: "You are not allowed to update this course"
+            });
+        }
+
+
+        const allowedFields = [
+            "title",
+            "description",
+            "category",
+            "level",
+            "status",
+            "publishedAt"
+        ];
+
+
+        let updated = false;
+
+        for (const field of allowedFields) {
+            if (req.body[field] !== undefined) {
+                course[field] = req.body[field];
+                updated = true;
+            }
+        }
+
+
+
+        if (!updated) {
+            return res.status(400).json({
+                message: "No valid fields provided for update"
+            });
+        }
+
+        await course.save();
+
+        return res.status(200).json(course);
     } catch (error) {
         next(error);
     }
