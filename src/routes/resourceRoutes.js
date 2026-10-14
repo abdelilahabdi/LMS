@@ -8,6 +8,7 @@ const authorize = require("../middlewares/authorize");
 
 const {
     getResourcesByModule,
+    getResourceById ,
     uploadResource
 } = require("../controllers/resourceController");
 
@@ -76,11 +77,26 @@ const { resourceUpload } = require("../middlewares/resourceUpload");
  *         description: Internal server error
  */
 
+
+
+// Get all resources of a module
+
+
 router.get(
     "/:moduleId/resources",
     auth,
     canAccessCourseContent,
-    getResourcesByModule
+    getResourcesByModule,
+   
+);
+
+
+// Get one resource by ID
+router.get(
+    "/:moduleId/resources/:id",
+    auth,
+    canAccessCourseContent,
+    getResourceById
 );
 
 
