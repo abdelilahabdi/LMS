@@ -136,10 +136,43 @@ const completeResource = async (req, res, next) => {
             return res.status(409).json({ message: "Resource is already completed" });
         }
 
-        progression.completed_resources.push(resource._id);
-        await progression.save();
+        const update = await Progress.updateOne(
+            {
+                _id: progression._id,
+                completed_resources: { $ne: resource._id }
+            },
+            { $addToSet: { completed_resources: resource._id } }
+        );
 
-        return res.status(200).json({ progression });
+        if (update.modifiedCount === 0) {
+            return res.status(409).json({ message: "Resource is already completed" });
+        }
+
+        const moduleIds = await Module.find({ course: progression.course_id }).distinct("_id");
+        const requiredResources = await Resource.find({ module: { $in: moduleIds } }).select("_id");
+        const requiredResourceIds = new Set(requiredResources.map((item) => item._id.toString()));
+        const latestProgression = await Progress.findById(progression._id);
+        const completedCount = latestProgression.completed_resources.filter(
+            (completedResourceId) => requiredResourceIds.has(completedResourceId.toString())
+        ).length;
+        const progressPercentage = requiredResources.length === 0
+            ? 0
+            : Math.min(100, Math.max(0, Math.floor((completedCount / requiredResources.length) * 100)));
+        const isComplete = requiredResources.length > 0 && completedCount === requiredResources.length;
+
+        latestProgression.completed = isComplete;
+        latestProgression.completed_at = isComplete
+            ? (latestProgression.completed_at || new Date())
+            : null;
+        await latestProgression.save();
+
+        enrollment.progress_percentage = isComplete ? 100 : progressPercentage;
+        await enrollment.save();
+
+        return res.status(200).json({
+            progression: latestProgression,
+            progress_percentage: enrollment.progress_percentage
+        });
     } catch (error) {
         return next(error);
     }
