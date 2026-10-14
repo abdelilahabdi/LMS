@@ -20,7 +20,12 @@ const courseShema = new mongoose.Schema (
             trim : true
         } ,
 
-
+        trainer : {
+            type : mongoose.Schema.Types.ObjectId ,
+            ref : "User" ,
+            required: true
+        },
+ 
         level : {
             type : String ,
             enum : ["beginner" , "intermediate" , "advanced"] ,
