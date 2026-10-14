@@ -20,5 +20,6 @@ const status_schema =  new mongoose.Schema(
 )
 
 
-const Staus = mongoose.model('staus', status_schema);
-module.exports = Staus;
+// Keep the existing collection while matching Enrollment's model reference.
+const Status = mongoose.model('Status', status_schema, 'staus');
+module.exports = Status;
