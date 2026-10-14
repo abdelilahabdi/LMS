@@ -9,6 +9,14 @@ const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
+// app.use((req, res, next) => {
+//     console.log("[REQUEST]", req.method, req.path);
+//     next();
+// });
+
+
+
+
 app.use(express.json());
 
 const googleDriveRoutes = require("./routes/googleDriveRoutes");
