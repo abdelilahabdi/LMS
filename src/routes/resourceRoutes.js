@@ -92,7 +92,7 @@ router.post(
     uploadResource
 );
 
-router.post("/:moduleId/resources", resourceUpload.single("file"), uploadResource);
+//router.post("/:moduleId/resources", resourceUpload.single("file"), uploadResource);
 
 
 module.exports = router;
