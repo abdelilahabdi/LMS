@@ -129,6 +129,32 @@ const completeResource = async (req, res, next) => {
             return res.status(400).json({ message: "Resource does not belong to this course" });
         }
 
+        const earlierModules = await Module.find({
+            course: progression.course_id,
+            order: { $lt: module.order }
+        }).sort({ order: 1 }).select("_id order title");
+        if (earlierModules.length > 0) {
+            const earlierResources = await Resource.find({
+                module: { $in: earlierModules.map((item) => item._id) }
+            }).select("_id module");
+            const completedIds = new Set(
+                progression.completed_resources.map((id) => id.toString())
+            );
+            const incompleteEarlierResource = earlierResources.find(
+                (item) => !completedIds.has(item._id.toString())
+            );
+
+            if (incompleteEarlierResource) {
+                const requiredModule = earlierModules.find(
+                    (item) => item._id.toString() === incompleteEarlierResource.module.toString()
+                );
+                return res.status(409).json({
+                    message: "Complete all resources in earlier modules first",
+                    required_module_id: requiredModule._id
+                });
+            }
+        }
+
         const alreadyCompleted = progression.completed_resources.some(
             (completedResourceId) => completedResourceId.toString() === resource.id
         );
