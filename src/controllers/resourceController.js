@@ -221,7 +221,20 @@ const getResourceById = async (req, res, next) =>
 {
     try
     {
-        const { id } = req.params;
+        const { id , moduleId } = req.params;
+
+
+
+        if (!isValidMongoId(moduleId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid module ID."
+            });
+        }
+
+
+
+
 
         if (!isValidMongoId(id))
         {
@@ -231,7 +244,26 @@ const getResourceById = async (req, res, next) =>
             });
         }
 
-        const resource = await Resource.findById(id);
+
+
+
+        const moduleExists = await Module.exists({
+            _id: moduleId
+        });
+
+        if (!moduleExists) {
+            return res.status(404).json({
+                success: false,
+                message: "Module not found."
+            });
+        }
+
+
+
+        const resource = await Resource.findOne({
+            _id: id ,
+            module: moduleId
+        });
 
         if (!resource)
         {
