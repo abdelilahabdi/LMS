@@ -1,4 +1,5 @@
 const Course = require("../models/Course");
+const User = require("../models/User");
 const mongoose = require("mongoose");
 const getCourses = async (req, res, next) => {
     try {
@@ -70,11 +71,54 @@ const createCourse = async (req, res, next) => {
             level
         } = req.body;
 
+
+
+        let trainerId;
+
+        if (req.user.role === "trainer") {
+            trainerId = req.user._id;
+        } else if (req.user.role === "admin") {
+            const requestedTrainerId = req.body.trainer;
+
+            if (
+                !requestedTrainerId ||
+                !mongoose.Types.ObjectId.isValid(requestedTrainerId)
+            ) {
+                return res.status(400).json({
+                    message: "A valid trainer ID is required"
+                });
+            }
+
+            const trainer = await User.findOne({
+                _id: requestedTrainerId,
+                role: "trainer",
+                status: "active"
+            }).select("_id");
+
+            if (!trainer) {
+                return res.status(400).json({
+                    message: "Trainer not found or inactive"
+                });
+            }
+
+            trainerId = trainer._id;
+        } else {
+            return res.status(403).json({
+                message: "You are not allowed to create courses"
+            });
+        }
+ 
+
+
+
+
+
         const course = await Course.create({
             title,
             description,
             category,
-            level
+            level,
+            trainer: trainerId
         });
 
         res.status(201).json(course);
