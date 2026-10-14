@@ -61,9 +61,22 @@ const canAccessCourseContent = async (req,res,next) => {
 
 
     if (req.user.role === "trainer") {
-        return res.status(403).json({
-            message : "trainer ownership validation is not configured" ,
+        const userId = req.user._id || req.user.id ;
+
+        if (
+            !course.trainer ||
+            !userId ||
+            course.trainer.toString() !== userId.toString()
+        ) {
+            return res.status(403).json({
+            message : "you are not allowed to access this course content"
         });
+
+        }
+
+        req.course = course ;
+        return next() ;
+        
     }
 
     if (req.user.role !== "learner") {
