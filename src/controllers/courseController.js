@@ -1,4 +1,5 @@
 const Course = require("../models/Course");
+const User = require("../models/User");
 const mongoose = require("mongoose");
 const getCourses = async (req, res, next) => {
     try {
@@ -70,11 +71,54 @@ const createCourse = async (req, res, next) => {
             level
         } = req.body;
 
+
+
+        let trainerId;
+
+        if (req.user.role === "trainer") {
+            trainerId = req.user._id;
+        } else if (req.user.role === "admin") {
+            const requestedTrainerId = req.body.trainer;
+
+            if (
+                !requestedTrainerId ||
+                !mongoose.Types.ObjectId.isValid(requestedTrainerId)
+            ) {
+                return res.status(400).json({
+                    message: "A valid trainer ID is required"
+                });
+            }
+
+            const trainer = await User.findOne({
+                _id: requestedTrainerId,
+                role: "trainer",
+                status: "active"
+            }).select("_id");
+
+            if (!trainer) {
+                return res.status(400).json({
+                    message: "Trainer not found or inactive"
+                });
+            }
+
+            trainerId = trainer._id;
+        } else {
+            return res.status(403).json({
+                message: "You are not allowed to create courses"
+            });
+        }
+ 
+
+
+
+
+
         const course = await Course.create({
             title,
             description,
             category,
-            level
+            level,
+            trainer: trainerId
         });
 
         res.status(201).json(course);
@@ -94,11 +138,8 @@ const updateCourse = async (req, res, next) => {
             });
         }
 
-        const course = await Course.findByIdAndUpdate(
-            id,
-            req.body,
-            { new: true, runValidators: true }
-        );
+        const course = await Course.findById(id);
+            
 
         if (!course) {
             return res.status(404).json({
@@ -106,7 +147,47 @@ const updateCourse = async (req, res, next) => {
             });
         }
 
-        res.status(200).json(course);
+        const userId = req.user._id || req.user.id;
+
+        if (
+            req.user.role === "trainer" && (!course.trainer || course.trainer.toString() !== userId.toString())
+        ) {
+            return res.status(403).json({
+                message: "You are not allowed to update this course"
+            });
+        }
+
+
+        const allowedFields = [
+            "title",
+            "description",
+            "category",
+            "level",
+            "status",
+            "publishedAt"
+        ];
+
+
+        let updated = false;
+
+        for (const field of allowedFields) {
+            if (req.body[field] !== undefined) {
+                course[field] = req.body[field];
+                updated = true;
+            }
+        }
+
+
+
+        if (!updated) {
+            return res.status(400).json({
+                message: "No valid fields provided for update"
+            });
+        }
+
+        await course.save();
+
+        return res.status(200).json(course);
     } catch (error) {
         next(error);
     }
@@ -124,7 +205,7 @@ const deleteCourse = async (req, res, next) => {
             });
         }
 
-        const course = await Course.findByIdAndDelete(id);
+        const course = await Course.findById(id);
 
         if (!course) {
             return res.status(404).json({
@@ -132,7 +213,23 @@ const deleteCourse = async (req, res, next) => {
             });
         }
 
-        res.status(200).json({
+        const userId = req.user._id || req.user.id;
+
+        if (
+            req.user.role === "trainer" &&
+            (
+                !course.trainer ||
+                course.trainer.toString() !== userId.toString()
+            )
+        ) {
+            return res.status(403).json({
+                message: "You are not allowed to delete this course"
+            });
+        }
+
+        await course.deleteOne();
+
+        return res.status(200).json({
             message: "Course deleted successfully"
         });
     } catch (error) {
