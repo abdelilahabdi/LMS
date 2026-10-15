@@ -104,6 +104,7 @@ router.post(
     "/:moduleId/resources",
     auth,
     authorize("trainer", "admin"),
+    canAccessCourseContent,
     resourceUpload.single("file"),
     uploadResource
 );
