@@ -3,7 +3,6 @@ const Course = require("../models/Course.js");
 const User = require("../models/User.js");
 const Status = require("../models/Status.js");
 const mongoose = require("mongoose");
-const { request } = require("../app.js");
 
 const enrollment_create = async (req, res) => {
     try {
@@ -94,20 +93,18 @@ const enrollment_create = async (req, res) => {
 };
 
 
-const  enrollment_getAll = async (request, response)=>
+const enrollment_getAll = async (req, res) =>
 {
     try {
-        const  enrollments = await Enrollment.find()
-        .populate("student_id", "name email")
-        .populate("course_id", "title description")
-        .populate("status_id", "status_name");
+        const enrollments = await Enrollment.find()
+            .populate("student_id", "name email")
+            .populate("course_id", "title description")
+            .populate("status_id", "status_name");
 
-    return response.status(200).json({ count: enrollments.length,enrollments})
-        
-    } catch (error) 
-    {
+        return res.status(200).json({ count: enrollments.length, enrollments });
+    } catch (error) {
         console.log(error);
-         return response.status(500).json({
+        return res.status(500).json({
             message: "Server error",
             error: error.message
         });
