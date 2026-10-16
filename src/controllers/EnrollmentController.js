@@ -112,7 +112,24 @@ const enrollment_getAll = async (req, res) =>
 
 }
 
+const enrollment_getByStudent = async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(studentId)) {
+            return res.status(400).json({ message: "Invalid student ID" });
+        }
+        const enrollments = await Enrollment.find({ student_id: studentId })
+            .populate("course_id", "title description")
+            .populate("status_id", "status_name");
+        return res.status(200).json({ count: enrollments.length, enrollments });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
 module.exports = {
     enrollment_create,
-    enrollment_getAll
+    enrollment_getAll,
+    enrollment_getByStudent
 };
