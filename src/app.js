@@ -7,6 +7,7 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./config/swagger");
 const authRoutes = require("./routes/authRoutes");
 const progressionRoutes = require("./routes/progressionRoutes");
+const trainerRoutes = require('./routes/trainerRoutes');
 
 const app = express();
 
@@ -14,8 +15,6 @@ const app = express();
 //     console.log("[REQUEST]", req.method, req.path);
 //     next();
 // });
-
-
 
 
 app.use(express.json());
@@ -28,6 +27,7 @@ app.use("/api/courses", courseRoutes);
 app.use("/api/modules", resourceRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/progression", progressionRoutes);
+app.use("/api/trainer", trainerRoutes);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const enrollment_route = require("./routes/enrollment_Routes");
