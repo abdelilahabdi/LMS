@@ -5,12 +5,27 @@ const mongoose = require("mongoose");
 const Course = require("../src/models/Course");
 const Module = require("../src/models/Module");
 const Resource = require("../src/models/Resource");
+const User = require("../src/models/User");
 
 const seedDatabase = async () => {
     try {
         await mongoose.connect(process.env.MONGO_URI);
 
         console.log("MongoDB connected");
+
+
+
+        const trainer = await User.findOne({
+            role: "trainer",
+            status: "active"
+           }).select("_id");
+
+        if (!trainer) {
+            throw new Error(
+            "No active trainer found. Create or activate a trainer before seeding."
+        );
+    }
+
 
         await Resource.deleteMany();
         await Module.deleteMany();
@@ -23,7 +38,8 @@ const seedDatabase = async () => {
                 category: "Web Development",
                 level: "beginner",
                 status: "published",
-                publishedAt: new Date()
+                publishedAt: new Date(),
+                trainer: trainer._id
             },
             {
                 title: "Node.js Backend Development",
@@ -31,7 +47,8 @@ const seedDatabase = async () => {
                 category: "Backend",
                 level: "intermediate",
                 status: "published",
-                publishedAt: new Date()
+                publishedAt: new Date(),
+                trainer: trainer._id,
             }
         ]);
 
