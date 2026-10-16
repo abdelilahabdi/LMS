@@ -1,3 +1,4 @@
 node_modules/
 .env
-.google-drive-tokens.jsonuploads/
+.google-drive-tokens.json
+uploads/
