@@ -3,7 +3,6 @@ const Course = require("../models/Course.js");
 const User = require("../models/User.js");
 const Status = require("../models/Status.js");
 const mongoose = require("mongoose");
-const { request } = require("../app.js");
 
 const enrollment_create = async (req, res) => {
     try {
@@ -15,15 +14,12 @@ const enrollment_create = async (req, res) => {
             });
         }
 
-        if (!mongoose.Types.ObjectId.isValid(student_id)) {
+        if (
+            !mongoose.Types.ObjectId.isValid(student_id) ||
+            !mongoose.Types.ObjectId.isValid(course_id)
+        ) {
             return res.status(400).json({
-                message: "Invalid student_id"
-            });
-        }
-
-        if (!mongoose.Types.ObjectId.isValid(course_id)) {
-            return res.status(400).json({
-                message: "Invalid course_id"
+                message: "Invalid student_id or course_id"
             });
         }
 
@@ -43,11 +39,10 @@ const enrollment_create = async (req, res) => {
             });
         }
 
-        if (foundCourse.status !== "published") 
-        {
+        if (foundCourse.status !== "published") {
             return res.status(400).json({
-             message: "This course is not published"
-         });
+                message: "This course is not published"
+            });
         }
 
         const existingEnrollment = await Enrollment.findOne({
@@ -93,29 +88,61 @@ const enrollment_create = async (req, res) => {
     }
 };
 
-
-const  enrollment_getAll = async (request, response)=>
-{
+const enrollment_getAll = async (req, res) => {
     try {
-        const  enrollments = await Enrollment.find()
-        .populate("student_id", "name email")
-        .populate("course_id", "title description")
-        .populate("status_id", "status_name");
+        const enrollments = await Enrollment.find()
+            .populate("student_id", "name email")
+            .populate("course_id", "title description")
+            .populate("status_id", "status_name");
 
-    return response.status(200).json({ count: enrollments.length,enrollments})
-        
-    } catch (error) 
-    {
-        console.log(error);
-         return response.status(500).json({
+        return res.status(200).json({
+            count: enrollments.length,
+            enrollments
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
             message: "Server error",
             error: error.message
         });
     }
+};
 
-}
+const enrollment_getByStudent = async (req, res) => {
+    try {
+        const { studentId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(studentId)) {
+            return res.status(400).json({
+                message: "Invalid student ID"
+            });
+        }
+
+        const enrollments = await Enrollment.find({
+            student_id: studentId
+        })
+            .populate("course_id", "title description")
+            .populate("status_id", "status_name");
+
+        return res.status(200).json({
+            count: enrollments.length,
+            enrollments
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            message: "Server error",
+            error: error.message
+        });
+    }
+};
 
 module.exports = {
     enrollment_create,
-    enrollment_getAll
+    enrollment_getAll,
+    enrollment_getByStudent
 };

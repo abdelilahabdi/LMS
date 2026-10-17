@@ -2,14 +2,9 @@ const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 
-
 const register = async (req, res, next) => {
     try {
-        const {
-            name,
-            email,
-            password
-        } = req.body;
+        const { name, email, password } = req.body;
 
         if (!name || !email || !password) {
             return res.status(400).json({
@@ -17,9 +12,7 @@ const register = async (req, res, next) => {
             });
         }
 
-        const existingUser = await User.findOne({
-            email
-        });
+        const existingUser = await User.findOne({ email });
 
         if (existingUser) {
             return res.status(409).json({
@@ -36,7 +29,7 @@ const register = async (req, res, next) => {
             role: "learner"
         });
 
-        res.status(201).json({
+        return res.status(201).json({
             message: "User registered successfully",
             user: {
                 id: user._id,
@@ -51,80 +44,75 @@ const register = async (req, res, next) => {
     }
 };
 
-
-
-const login = async (req , res , next) => {
+const login = async (req, res, next) => {
     try {
-        const {
-            email,
-            password
-        } = req.body ;
+        const { email, password } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({
-                message : "email and password are required"
+                message: "email and password are required"
             });
         }
 
-        const user = await User.findOne ({
-            email
-        }) ;
-
+        const user = await User.findOne({ email });
 
         if (!user) {
             return res.status(401).json({
-                message : "invalid email or password"
+                message: "invalid email or password"
             });
         }
 
         const isPasswordValid = await bcrypt.compare(
             password,
             user.password
-        ) ;
+        );
 
         if (!isPasswordValid) {
             return res.status(401).json({
-                message : "invalid email or password"
-            }) ;
+                message: "invalid email or password"
+            });
         }
 
+        if (!process.env.JWT_SECRET) {
+            return res.status(500).json({
+                message: "JWT_SECRET is not configured"
+            });
+        }
 
         const token = jwt.sign(
             {
-                sub: user._id.toString() 
+                sub: user._id.toString()
             },
-
             process.env.JWT_SECRET,
-
             {
-                expiresIn : process.env.JWT_SECRET_IN || "1h"
+                expiresIn: process.env.JWT_EXPIRES_IN || "1h"
             }
         );
 
-        res.status(200).json({
-            message : "login successful" ,
+        return res.status(200).json({
+            message: "login successful",
             token,
-            user : {
-               id : user._id ,
-               name : user.name ,
-               email : user.email,
-               role : user.role ,
-               status : user.status
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                status: user.status
             }
         });
     } catch (error) {
-        next(error) ;
+        next(error);
     }
-} ;
-
+};
 
 const getMe = (req, res) => {
     return res.status(200).json({
-        user: req.user,
+        user: req.user
     });
-} ;
+};
+
 module.exports = {
-    register ,
-    login ,
-    getMe,
+    register,
+    login,
+    getMe
 };

@@ -1,0 +1,54 @@
+{
+  "info": {
+    "name": "LMS API - Authentification, accès et progression",
+    "description": "Collection for YouCode brief. Use placeholders only. Never include real secrets.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Register (public, learner role)",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "http://localhost:3000/api/auth/register", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["api","auth","register"] },
+        "body": { "mode": "raw", "raw": "{\"name\":\"Learner\",\"email\":\"learner@test.local\",\"password\":\"test123\"}" }
+      }
+    },
+    {
+      "name": "Login (JWT token)",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "http://localhost:3000/api/auth/login", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["api","auth","login"] },
+        "body": { "mode": "raw", "raw": "{\"email\":\"learner@test.local\",\"password\":\"test123\"}" }
+      }
+    },
+    {
+      "name": "Enrollment - create",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "http://localhost:3000/enrollment", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["enrollment"] },
+        "body": { "mode": "raw", "raw": "{\"student_id\":\"<STUDENT_ID>\",\"course_id\":\"<COURSE_ID>\"}" },
+        "header": [{ "key": "Authorization", "value": "Bearer <TOKEN>", "type": "text" }]
+      }
+    },
+    {
+      "name": "Enrollment - list",
+      "request": { "method": "GET", "url": { "raw": "http://localhost:3000/enrollment", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["enrollment"] } }
+    },
+    {
+      "name": "Enrollment - student lookup",
+      "request": { "method": "GET", "url": { "raw": "http://localhost:3000/enrollment/student/<STUDENT_ID>", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["enrollment","student","<STUDENT_ID>"] } }
+    },
+    {
+      "name": "Progression - list",
+      "request": { "method": "GET", "url": { "raw": "http://localhost:3000/api/progression", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["api","progression"] }, "header": [{ "key": "Authorization", "value": "Bearer <TOKEN>" }] }
+    },
+    {
+      "name": "Trainer - enrolled learners",
+      "request": { "method": "GET", "url": { "raw": "http://localhost:3000/api/trainer/enrolled", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["api","trainer","enrolled"] }, "header": [{ "key": "Authorization", "value": "Bearer <TOKEN>" }] }
+    },
+    {
+      "name": "Trainer - learner progression",
+      "request": { "method": "GET", "url": { "raw": "http://localhost:3000/api/trainer/progression/<STUDENT_ID>/<COURSE_ID>", "protocol": "http", "host": ["localhost"], "port": "3000", "path": ["api","trainer","progression","<STUDENT_ID>","<COURSE_ID>"] }, "header": [{ "key": "Authorization", "value": "Bearer <TOKEN>" }] }
+    }
+  ]
+}
