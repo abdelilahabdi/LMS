@@ -189,6 +189,490 @@ test("completion recalculates percentage and marks a fully completed course", as
     assert.equal(enrollment.progress_percentage, 100);
 });
 
+
+test("completion rejects a resource when earlier module resources are incomplete", async () => {
+    const learnerId = new mongoose.Types.ObjectId().toString();
+    const progressionId = new mongoose.Types.ObjectId();
+    const courseId = new mongoose.Types.ObjectId();
+    const earlierModuleId = new mongoose.Types.ObjectId();
+    const targetModuleId = new mongoose.Types.ObjectId();
+    const earlierResourceId = new mongoose.Types.ObjectId();
+    const targetResourceId = new mongoose.Types.ObjectId();
+
+    const progression = {
+        _id: progressionId,
+        enrollment_id: new mongoose.Types.ObjectId(),
+        course_id: courseId,
+        completed_resources: []
+    };
+
+    replace(Progress, "findOne", async () => progression);
+
+    replace(Enrollment, "findOne", async () => ({
+        status_id: "active"
+    }));
+
+    replace(Status, "findById", async () => ({
+        status_name: "active"
+    }));
+
+    replace(Resource, "findById", async () => ({
+        _id: targetResourceId,
+        id: targetResourceId.toString(),
+        module: targetModuleId
+    }));
+
+    replace(Module, "findById", async () => ({
+        course: courseId,
+        order: 2
+    }));
+
+    replace(Module, "find", () => ({
+        sort() {
+            return this;
+        },
+        select: async () => [
+            {
+                _id: earlierModuleId,
+                order: 1,
+                title: "Earlier Module"
+            }
+        ]
+    }));
+
+    replace(Resource, "find", () => ({
+        select: async () => [
+            {
+                _id: earlierResourceId,
+                module: earlierModuleId
+            }
+        ]
+    }));
+
+    const res = response();
+
+    await progressionController.completeResource(
+        {
+            user: { id: learnerId },
+            params: {
+                id: progressionId.toString(),
+                resourceId: targetResourceId.toString()
+            }
+        },
+        res,
+        (error) => {
+            throw error;
+        }
+    );
+
+    assert.equal(res.statusCode, 409);
+    assert.equal(
+        res.body.message,
+        "Complete all resources in earlier modules first"
+    );
+    assert.equal(
+        res.body.required_module_id.toString(),
+        earlierModuleId.toString()
+    );
+});
+
+
+
+test("completion rejects a resource that is already completed", async () => {
+    const learnerId = new mongoose.Types.ObjectId().toString();
+    const progressionId = new mongoose.Types.ObjectId();
+    const courseId = new mongoose.Types.ObjectId();
+    const resourceId = new mongoose.Types.ObjectId();
+    const moduleId = new mongoose.Types.ObjectId();
+
+    const progression = {
+        _id: progressionId,
+        enrollment_id: new mongoose.Types.ObjectId(),
+        course_id: courseId,
+        completed_resources: [resourceId]
+    };
+
+    replace(Progress, "findOne", async () => progression);
+
+    replace(Enrollment, "findOne", async () => ({
+        status_id: "active"
+    }));
+
+    replace(Status, "findById", async () => ({
+        status_name: "active"
+    }));
+
+    replace(Resource, "findById", async () => ({
+        _id: resourceId,
+        id: resourceId.toString(),
+        module: moduleId
+    }));
+
+    replace(Module, "findById", async () => ({
+        course: courseId,
+        order: 1
+    }));
+
+    replace(Module, "find", () => ({
+        sort() {
+            return this;
+        },
+        select: async () => []
+    }));
+
+    const res = response();
+
+    await progressionController.completeResource(
+        {
+            user: { id: learnerId },
+            params: {
+                id: progressionId.toString(),
+                resourceId: resourceId.toString()
+            }
+        },
+        res,
+        (error) => {
+            throw error;
+        }
+    );
+
+    assert.equal(res.statusCode, 409);
+    assert.equal(res.body.message, "Resource is already completed");
+});
+
+
+
+test("getProgressionById rejects another learner's progression", async () => {
+    const learnerId = new mongoose.Types.ObjectId().toString();
+    const anotherLearnerId = new mongoose.Types.ObjectId();
+
+    const progression = {
+        _id: new mongoose.Types.ObjectId(),
+        student_id: anotherLearnerId,
+        enrollment_id: new mongoose.Types.ObjectId(),
+        course_id: new mongoose.Types.ObjectId(),
+        completed_resources: []
+    };
+
+    let populateCalls = 0;
+
+    const query = {
+        populate() {
+            populateCalls += 1;
+
+            if (populateCalls === 3) {
+                return Promise.resolve(progression);
+            }
+
+            return this;
+        }
+    };
+
+    replace(Progress, "findById", () => query);
+
+    const res = response();
+
+    await progressionController.getProgressionById(
+        {
+            user: { id: learnerId },
+            params: { id: progression._id.toString() }
+        },
+        res,
+        (error) => {
+            throw error;
+        }
+    );
+
+    assert.equal(res.statusCode, 403);
+    assert.equal(
+        res.body.message,
+        "You cannot access this progression"
+    );
+});
+
+
+test("getProgressions returns only the authenticated learner's progressions", async () => {
+    const learnerId = new mongoose.Types.ObjectId().toString();
+
+    const progressions = [
+        {
+            _id: new mongoose.Types.ObjectId(),
+            student_id: learnerId,
+            course_id: new mongoose.Types.ObjectId(),
+            completed_resources: []
+        }
+    ];
+
+    let queryFilter;
+
+    const query = {
+        populate() {
+            return this;
+        },
+        then(resolve, reject) {
+            return Promise.resolve(progressions).then(resolve, reject);
+        }
+    };
+
+    replace(Progress, "find", (filter) => {
+        queryFilter = filter;
+        return query;
+    });
+
+    const res = response();
+
+    await progressionController.getProgressions(
+        {
+            user: { id: learnerId }
+        },
+        res,
+        (error) => {
+            throw error;
+        }
+    );
+
+    assert.equal(queryFilter.student_id, learnerId);
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.count, 1);
+    assert.equal(res.body.progressions.length, 1);
+});
+
+
+test("getProgressionById allows the owner to view their progression", async () => {
+    const learnerId = new mongoose.Types.ObjectId().toString();
+
+    const progression = {
+        _id: new mongoose.Types.ObjectId(),
+        student_id: new mongoose.Types.ObjectId(learnerId),
+        enrollment_id: new mongoose.Types.ObjectId(),
+        course_id: new mongoose.Types.ObjectId(),
+        completed_resources: []
+    };
+
+    const query = {
+        populate() {
+            return this;
+        },
+        then(resolve, reject) {
+            return Promise.resolve(progression).then(resolve, reject);
+        }
+    };
+
+    replace(Progress, "findById", (id) => {
+        assert.equal(id, progression._id.toString());
+        return query;
+    });
+
+    const res = response();
+
+    await progressionController.getProgressionById(
+        {
+            user: { id: learnerId },
+            params: { id: progression._id.toString() }
+        },
+        res,
+        (error) => {
+            throw error;
+        }
+    );
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.progression, progression);
+});
+
+test("getProgressionById returns 404 when progression does not exist", async () => {
+    const query = {
+        populate() {
+            return this;
+        },
+        then(resolve, reject) {
+            return Promise.resolve(null).then(resolve, reject);
+        }
+    };
+
+    replace(Progress, "findById", () => query);
+
+    const res = response();
+
+    await progressionController.getProgressionById(
+        {
+            user: { id: new mongoose.Types.ObjectId().toString() },
+            params: { id: new mongoose.Types.ObjectId().toString() }
+        },
+        res,
+        (error) => {
+            throw error;
+        }
+    );
+
+    assert.equal(res.statusCode, 404);
+    assert.equal(res.body.message, "Progression not found");
+});
+
+
+test("initialization reuses an existing progression for the same enrollment", async () => {
+    const learnerId = new mongoose.Types.ObjectId().toString();
+    const enrollmentId = new mongoose.Types.ObjectId();
+    const courseId = new mongoose.Types.ObjectId();
+
+    const existingProgression = {
+        _id: new mongoose.Types.ObjectId(),
+        student_id: learnerId,
+        enrollment_id: enrollmentId,
+        course_id: courseId,
+        completed_resources: []
+    };
+
+    replace(Enrollment, "findOne", async () => ({
+        _id: enrollmentId,
+        id: enrollmentId.toString(),
+        course_id: courseId,
+        status_id: "active"
+    }));
+
+    replace(Status, "findById", async () => ({
+        status_name: "active"
+    }));
+
+    replace(Progress, "findOne", async () => existingProgression);
+
+    replace(Progress, "create", async () => {
+        throw new Error("A duplicate progression should not be created");
+    });
+
+    const res = response();
+
+    await progressionController.initializeProgression(
+        {
+            user: { id: learnerId },
+            body: { enrollment_id: enrollmentId.toString() }
+        },
+        res,
+        (error) => {
+            throw error;
+        }
+    );
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.initialized, false);
+    assert.equal(res.body.progression, existingProgression);
+});
+
+test("initialization rejects a duplicate progression for the same course", async () => {
+    const learnerId = new mongoose.Types.ObjectId().toString();
+    const oldEnrollmentId = new mongoose.Types.ObjectId();
+    const newEnrollmentId = new mongoose.Types.ObjectId();
+    const courseId = new mongoose.Types.ObjectId();
+
+    const existingProgression = {
+        _id: new mongoose.Types.ObjectId(),
+        student_id: learnerId,
+        enrollment_id: oldEnrollmentId,
+        course_id: courseId,
+        completed_resources: []
+    };
+
+    replace(Enrollment, "findOne", async () => ({
+        _id: newEnrollmentId,
+        id: newEnrollmentId.toString(),
+        course_id: courseId,
+        status_id: "active"
+    }));
+
+    replace(Status, "findById", async () => ({
+        status_name: "active"
+    }));
+
+    replace(Progress, "findOne", async () => existingProgression);
+
+    replace(Progress, "create", async () => {
+        throw new Error("A duplicate progression should not be created");
+    });
+
+    const res = response();
+
+    await progressionController.initializeProgression(
+        {
+            user: { id: learnerId },
+            body: { enrollment_id: newEnrollmentId.toString() }
+        },
+        res,
+        (error) => {
+            throw error;
+        }
+    );
+
+    assert.equal(res.statusCode, 409);
+    assert.equal(
+        res.body.message,
+        "Progression already exists for this course"
+    );
+});
+
+test("completion returns 404 when progression does not exist", async () => {
+    replace(Progress, "findOne", async () => null);
+
+    const res = response();
+
+    await progressionController.completeResource(
+        {
+            user: { id: new mongoose.Types.ObjectId().toString() },
+            params: {
+                id: new mongoose.Types.ObjectId().toString(),
+                resourceId: new mongoose.Types.ObjectId().toString()
+            }
+        },
+        res,
+        (error) => {
+            throw error;
+        }
+    );
+
+    assert.equal(res.statusCode, 404);
+    assert.equal(res.body.message, "Progression not found");
+});
+
+test("completion returns 404 when resource does not exist", async () => {
+    const learnerId = new mongoose.Types.ObjectId().toString();
+    const progressionId = new mongoose.Types.ObjectId();
+
+    const progression = {
+        _id: progressionId,
+        student_id: learnerId,
+        enrollment_id: new mongoose.Types.ObjectId(),
+        course_id: new mongoose.Types.ObjectId(),
+        completed_resources: []
+    };
+
+    replace(Progress, "findOne", async () => progression);
+    replace(Enrollment, "findOne", async () => ({
+        status_id: "active"
+    }));
+    replace(Status, "findById", async () => ({
+        status_name: "active"
+    }));
+    replace(Resource, "findById", async () => null);
+
+    const res = response();
+
+    await progressionController.completeResource(
+        {
+            user: { id: learnerId },
+            params: {
+                id: progressionId.toString(),
+                resourceId: new mongoose.Types.ObjectId().toString()
+            }
+        },
+        res,
+        (error) => {
+            throw error;
+        }
+    );
+
+    assert.equal(res.statusCode, 404);
+    assert.equal(res.body.message, "Resource not found");
+});
+
 test("completion rejects a resource from another course", async () => {
     const learnerId = new mongoose.Types.ObjectId().toString();
     const courseId = new mongoose.Types.ObjectId();
