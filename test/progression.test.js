@@ -52,7 +52,7 @@ test("Progress model requires learner, enrollment, and course references", () =>
     assert.equal(schema.path("student_id").options.ref, "User");
     assert.equal(schema.path("enrollment_id").options.ref, "Enrollment");
     assert.equal(schema.path("course_id").options.ref, "Course");
-    assert.equal(schema.path("completed_resources").embeddedSchemaType.options.ref, "Resource");
+    assert.equal(schema.path("completed_resources").caster.options.ref, "Resource");
     assert.ok(schema.indexes().some(([keys, options]) => keys.enrollment_id === 1 && options.unique));
 });
 
