@@ -8,6 +8,7 @@ const {
     validateProgressionInitialization,
     validateCompletionBody
 } = require("../middlewares/progressionValidation");
+
 const {
     getProgressions,
     getProgressionById,
@@ -16,11 +17,25 @@ const {
 } = require("../controllers/progressionController");
 
 const router = express.Router();
+
 const learnerAccess = [auth, authorize("learner")];
 
 router.get("/", ...learnerAccess, getProgressions);
-router.get("/:id", ...learnerAccess, validateProgressionId, getProgressionById);
-router.post("/", ...learnerAccess, validateProgressionInitialization, initializeProgression);
+
+router.get(
+    "/:id",
+    ...learnerAccess,
+    validateProgressionId,
+    getProgressionById
+);
+
+router.post(
+    "/",
+    ...learnerAccess,
+    validateProgressionInitialization,
+    initializeProgression
+);
+
 router.patch(
     "/:id/resources/:resourceId",
     ...learnerAccess,
