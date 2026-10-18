@@ -608,3 +608,120 @@ test("learner cannot upload a resource", async () => {
         "You do not have permission to access this resource"
     );
 });
+
+test("trainer can create a course and is assigned as its owner", async () => {
+    const trainer = makeUser({ role: "trainer" });
+    let createdFields;
+
+    replace(User, "findById", () => ({
+        select: async () => trainer
+    }));
+
+    replace(Course, "create", async (fields) => {
+        createdFields = fields;
+
+        return {
+            _id: new mongoose.Types.ObjectId(),
+            ...fields
+        };
+    });
+
+    const res = await request(app)
+        .post("/api/courses")
+        .set("Authorization", `Bearer ${makeToken(trainer._id)}`)
+        .send({
+            title: "Test Course",
+            description: "Course created by a trainer",
+            category: "Testing",
+            level: "beginner"
+        });
+
+    assert.equal(res.status, 201);
+    assert.equal(
+        createdFields.trainer.toString(),
+        trainer._id.toString()
+    );
+    assert.equal(
+        res.body.trainer,
+        trainer._id.toString()
+    );
+});
+
+
+
+test("admin can create a course assigned to an active trainer", async () => {
+    const admin = makeUser({ role: "admin" });
+    const trainer = makeUser({ role: "trainer" });
+    let createdFields;
+
+    replace(User, "findById", () => ({
+        select: async () => admin
+    }));
+
+    replace(User, "findOne", () => ({
+        select: async () => trainer
+    }));
+
+    replace(Course, "create", async (fields) => {
+        createdFields = fields;
+
+        return {
+            _id: new mongoose.Types.ObjectId(),
+            ...fields
+        };
+    });
+
+    const res = await request(app)
+        .post("/api/courses")
+        .set("Authorization", `Bearer ${makeToken(admin._id)}`)
+        .send({
+            title: "Admin Created Course",
+            description: "Course assigned by admin",
+            category: "Testing",
+            level: "beginner",
+            trainer: trainer._id.toString()
+        });
+
+    assert.equal(res.status, 201);
+    assert.equal(
+        createdFields.trainer.toString(),
+        trainer._id.toString()
+    );
+    assert.equal(
+        res.body.trainer,
+        trainer._id.toString()
+    );
+});
+
+
+test("course owner can delete their own course", async () => {
+    const trainer = makeUser({ role: "trainer" });
+    const courseId = new mongoose.Types.ObjectId();
+    let deleteCalled = false;
+
+    const course = {
+        _id: courseId,
+        title: "Course to delete",
+        trainer: trainer._id,
+        deleteOne: async function () {
+            deleteCalled = true;
+        }
+    };
+
+    replace(User, "findById", () => ({
+        select: async () => trainer
+    }));
+
+    replace(Course, "findById", async (id) => {
+        assert.equal(id, courseId.toString());
+        return course;
+    });
+
+    const res = await request(app)
+        .delete(`/api/courses/${courseId}`)
+        .set("Authorization", `Bearer ${makeToken(trainer._id)}`);
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.message, "Course deleted successfully");
+    assert.equal(deleteCalled, true);
+});
