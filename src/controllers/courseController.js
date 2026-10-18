@@ -76,7 +76,7 @@ const createCourse = async (req, res, next) => {
         let trainerId;
 
         if (req.user.role === "trainer") {
-            trainerId = req.user._id;
+            trainerId = req.user._id   || req.user.id  ;
         } else if (req.user.role === "admin") {
             const requestedTrainerId = req.body.trainer;
 
