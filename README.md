@@ -55,3 +55,5 @@ node --test test/*.test.js
 ## Documentation
 - Swagger: `/api-docs`
 - Progression docs: `docs/progression.md`
+
+- test
